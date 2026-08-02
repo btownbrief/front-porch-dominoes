@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#172c3b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Front Porch Dominoes — Btown Games</title>
+  <meta name="description" content="Draw dominoes under the string lights. Play to 100 against a porch regular, pass the phone, or gather an online crew.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Front Porch Dominoes">
+  <meta property="og:description" content="A summer-evening game of draw dominoes from Btown Games. Lemonade optional; porch manners required.">
+  <meta property="og:url" content="https://play.btownbrief.com/front-porch-dominoes/">
+  <meta property="og:image" content="https://play.btownbrief.com/front-porch-dominoes/icon-180.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:image" content="https://play.btownbrief.com/front-porch-dominoes/icon-180.png">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="app">
+  <section id="menu" class="screen porch-scene">
+    <div class="string-lights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="menu-card">
+      <div class="eyebrow">A BURLINGTON SUMMER EVENING</div>
+      <h1><span>FRONT PORCH</span> DOMINOES</h1>
+      <p class="tagline">Pull up a chair. Match the open ends, draw when you’re stuck, and be first to 100.</p>
+
+      <button id="resumeBtn" class="primary hidden">↩ BACK TO THE PORCH</button>
+
+      <div class="mode-block">
+        <div class="mode-label">PLAY A PORCH REGULAR</div>
+        <div class="bot-grid">
+          <button class="bot-choice" data-bot="pete">
+            <span class="mode-title">🪑 Porch Swing Pete</span>
+            <span class="mode-blurb">Easygoing. Sheds the heaviest tile he can.</span>
+          </button>
+          <button class="bot-choice sharper" data-bot="neighbor">
+            <span class="mode-title">👀 The Neighbor</span>
+            <span class="mode-blurb">Sharper. Pinches off the numbers you need.</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="mode-block compact">
+        <button id="passBtn" class="mode-btn">📱 PASS &amp; PLAY</button>
+        <div id="countRow" class="count-row hidden">
+          <span>HOW MANY ON THE PORCH?</span>
+          <div class="count-buttons">
+            <button class="count-btn" data-n="2">2</button>
+            <button class="count-btn" data-n="3">3</button>
+            <button class="count-btn" data-n="4">4</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="onlineSetup" class="mode-block compact">
+        <div class="mode-label">OR PLAY ACROSS TOWN · 2–4 PHONES</div>
+        <div class="online-row">
+          <button id="hostBtn" class="mode-btn"><b>✨ START A CREW</b><small>get a porch code</small></button>
+          <button id="joinBtn" class="mode-btn"><b>🔑 JOIN A CREW</b><small>bring a code</small></button>
+        </div>
+        <button id="rejoinBtn" class="text-btn hidden"></button>
+      </div>
+
+      <details class="rules">
+        <summary>How to play</summary>
+        <p>Play a tile that matches either open end. No match? Draw from the boneyard until you can play or it runs dry. Empty your hand to score every pip left around the porch.</p>
+        <p>A blocked round goes to the lowest pip count. First to 100 wins the match. Doubles sit crosswise, as tradition demands.</p>
+      </details>
+    </div>
+
+    <div id="onlinePanel" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="opTitle">
+      <div class="dialog-card">
+        <h2 id="opTitle">START A CREW</h2>
+        <label for="opName">YOUR NAME</label>
+        <input id="opName" maxlength="24" autocomplete="nickname" placeholder="Porch pal">
+        <div id="opSeatsWrap">
+          <label>PHONES ON THE PORCH</label>
+          <div id="opSeats" class="seat-btns" role="group" aria-label="Phones on the porch">
+            <button class="seat-btn selected" data-seats="2" aria-pressed="true">2</button>
+            <button class="seat-btn" data-seats="3" aria-pressed="false">3</button>
+            <button class="seat-btn" data-seats="4" aria-pressed="false">4</button>
+          </div>
+        </div>
+        <div id="opCodeWrap" class="hidden">
+          <label for="opCode">PORCH CODE</label>
+          <input id="opCode" maxlength="4" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="ABCD">
+        </div>
+        <div id="opError" class="error hidden" role="alert"></div>
+        <div class="dialog-actions">
+          <button id="opCancel" class="text-btn">BACK</button>
+          <button id="opGo" class="primary">GET A CODE</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="lobby" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="dialog-card lobby-card">
+        <div class="mode-label">READ THIS CODE TO THE CREW</div>
+        <div id="lobbyCode"></div>
+        <p id="lobbyHint">They tap <b>JOIN A CREW</b> and type it in.</p>
+        <div class="mode-label">ON THE PORCH</div>
+        <ul id="lobbyNames" aria-live="polite"></ul>
+        <button id="lobbyCancel" class="text-btn">CALL IT OFF</button>
+      </div>
+    </div>
+
+    <footer>A Btown Games production · <a href="https://play.btownbrief.com/">More games →</a> · <a href="https://www.btownbrief.com">Read the BTown Brief →</a></footer>
+  </section>
+
+  <section id="handoff" class="screen porch-scene hidden">
+    <div class="string-lights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="handoff-card">
+      <div class="handoff-icon">🙈</div>
+      <div class="eyebrow">PORCH MANNERS</div>
+      <h2 id="handoffTitle">Pass the phone</h2>
+      <p id="handoffLine">Keep everybody’s tiles neighborly and private.</p>
+      <button id="handoffBtn" class="primary">SHOW MY HAND</button>
+    </div>
+  </section>
+
+  <section id="game" class="screen game-screen hidden">
+    <header class="game-header">
+      <button id="homeBtn" class="icon-btn" aria-label="Back to menu">⌂</button>
+      <div class="round-mark"><span id="roundLabel">ROUND 1</span><b>FIRST TO 100</b></div>
+      <button id="helpBtn" class="icon-btn" aria-label="Show rules">?</button>
+    </header>
+
+    <div id="scoreboard" class="scoreboard" aria-label="Scores"></div>
+    <div id="opponents" class="opponents"></div>
+
+    <div class="table-wrap">
+      <div class="table-glow" aria-hidden="true"></div>
+      <div id="turnNotice" class="turn-notice"></div>
+      <div id="chainBoard" class="chain-board" aria-label="Domino chain"></div>
+      <div class="table-controls">
+        <button id="drawBtn" class="boneyard" aria-label="Draw from the boneyard">
+          <span class="mini-stack" aria-hidden="true"><i></i><i></i><i></i></span>
+          <b>DRAW</b>
+          <small id="boneCount">0 in the boneyard</small>
+        </button>
+        <button id="passGameBtn" class="text-btn hidden">PASS — PORCH IS BLOCKED</button>
+      </div>
+      <div id="narration" class="narration" aria-live="polite"></div>
+    </div>
+
+    <div class="hand-area">
+      <div class="hand-heading"><span id="handLabel">YOUR HAND</span><span id="handPips"></span></div>
+      <div id="hand" class="hand"></div>
+    </div>
+
+    <div id="sidePicker" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="dialog-card side-card">
+        <h2>Which end?</h2>
+        <p>That tile fits both sides of the line.</p>
+        <div class="dialog-actions">
+          <button id="playLeft" class="primary">← LEFT END</button>
+          <button id="playRight" class="primary">RIGHT END →</button>
+        </div>
+        <button id="cancelSide" class="text-btn">KEEP THE TILE</button>
+      </div>
+    </div>
+
+    <div id="rulesPanel" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="dialog-card">
+        <h2>Porch rules</h2>
+        <p>Match either open number. If you’re stuck, draw until something fits or the boneyard empties. Lowest pip count wins a blocked round.</p>
+        <p>Round winner scores the pips left in everybody else’s hand. First to 100 takes the match.</p>
+        <button id="closeRules" class="primary">GOT IT</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="roundover" class="screen result-screen hidden">
+    <div class="result-card">
+      <div class="lemonade" aria-hidden="true">🍋</div>
+      <div class="eyebrow">THE CRICKETS PAUSE</div>
+      <h2 id="roundTitle"></h2>
+      <p id="roundLine"></p>
+      <div id="roundScores" class="result-scores"></div>
+      <button id="nextRoundBtn" class="primary">DEAL THE NEXT ROUND</button>
+      <button id="roundMenuBtn" class="text-btn">BACK TO MENU</button>
+    </div>
+  </section>
+
+  <section id="gameover" class="screen result-screen hidden">
+    <div class="result-card match-card">
+      <div class="porch-burst" aria-hidden="true">✨ 🦗 ✨</div>
+      <div class="eyebrow">PORCH CHAMPION</div>
+      <h2 id="gameoverTitle"></h2>
+      <p id="gameoverLine"></p>
+      <div id="finalScores" class="result-scores"></div>
+      <button id="againBtn" class="primary">PLAY ANOTHER MATCH</button>
+      <button id="menuBtn" class="text-btn">BACK TO MENU</button>
+      <a class="brief-cta" href="https://www.btownbrief.com">The porch gossip can wait.<br><b>Read the BTown Brief →</b></a>
+    </div>
+  </section>
+</main>
+<script type="module" src="js/main.js"></script>
+<script src="https://play.btownbrief.com/ticker.js" defer></script>
+</body>
+</html>
