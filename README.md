@@ -37,6 +37,7 @@ There is no framework, package manager, or build step.
 | `js/bot.js` | The two personalities, choosing only engine-legal moves |
 | `js/main.js` | Rendering, taps, handoffs, local resume, and online flow |
 | `js/rooms.js` | Verbatim shared rooms client—never edit locally |
+| `js/leaderboard.js` | Monthly leaderboard client (Supabase); vs-bot wins only, no accounts |
 | `scripts/rooms-shim.mjs` | Verbatim offline rooms backend used by tests |
 
 The line automatically snakes into alternating rows as it grows; doubles are

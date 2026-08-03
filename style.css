@@ -262,6 +262,83 @@ footer { position: relative; z-index: 3; margin-top: auto; padding: 22px 0 0; te
 .result-card > button { width: 100%; margin-top: 8px; }
 .brief-cta { display: block; margin-top: 17px; padding: 12px; border-radius: 10px; background: rgba(246,206,103,.1); text-decoration: none; font-size: 12px; line-height: 1.45; }
 
+/* ---------------------------------------------------------- leaderboard */
+
+#lb {
+  margin: 14px 0 6px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.lb-tabs { display: flex; gap: 8px; }
+.lb-chip {
+  min-height: 34px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(246,206,103,.16);
+  color: var(--lemon);
+  font: 800 11px/1.2 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: .06em;
+  cursor: pointer;
+}
+.lb-tabs .lb-chip { opacity: .6; }
+.lb-tabs .lb-chip.sel { opacity: 1; background: var(--porch); color: var(--cream); }
+.lb-status {
+  min-height: 15px;
+  color: var(--mint);
+  font: 700 12px/1.3 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: .03em;
+  text-align: center;
+}
+#lbList {
+  list-style: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+#lbList li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  color: #c9dbd4;
+  font: 700 13px/1.4 ui-sans-serif, system-ui, sans-serif;
+}
+#lbList li.me { background: rgba(246,206,103,.16); color: var(--lemon); }
+#lbList .rank { width: 26px; text-align: center; }
+#lbList .nm {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#lbList .sc { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lb-form { display: flex; gap: 8px; width: 100%; }
+.lb-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  color: var(--cream);
+  background: rgba(255,255,255,.1);
+  border: 2px solid rgba(246,206,103,.35);
+  border-radius: 10px;
+  outline: none;
+  font-size: 14px;
+  font-weight: 700;
+  user-select: text;
+}
+.lb-form input:focus { border-color: var(--lemon); }
+
 @media (max-width: 430px) {
   .menu-card { padding: 19px 13px 16px; }
   .porch-scene { padding-left: 12px; padding-right: 12px; }

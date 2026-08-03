@@ -8,6 +8,10 @@ import {
 } from './engine.js';
 import { BOT_PERSONAS, chooseMove } from './bot.js';
 import { OnlineMatch, clearSession, getName, savedSession } from './rooms.js';
+import {
+  lbEnabled, fetchTop, submitScore, renamePlayer, monthLabel,
+  getName as lbGetName, playerId as lbPlayerId,
+} from './leaderboard.js';
 
 const GAME = 'front-porch-dominoes';
 const SAVE_KEY = 'front-porch-dominoes-save-v1';
@@ -305,6 +309,12 @@ function showGameOver() {
   renderScores($('finalScores'), true);
   saveLocal();
   show('gameover');
+  // Vs-bot matches only: submit exactly once per match (lbSubmitted resets
+  // whenever a game starts or resumes). Losses show the standings read-only.
+  if (G.mode === 'bot' && !lbSubmitted) {
+    lbSubmitted = true;
+    updateLeaderboard(winner === 0 ? botWinScore() : 0);
+  }
 }
 
 function presentState(previousPlayer = null) {
@@ -334,6 +344,8 @@ function startGame(mode, numPlayers, bot = 'pete') {
   onlinePushing = false;
   pendingTile = null;
   G = { mode, bot, state: createInitialState({ numPlayers, seed: newSeed() }) };
+  lbSubmitted = false;
+  resetLbPanel();
   saveLocal();
   if (mode === 'pass') showHandoff(0);
   else presentState();
@@ -410,6 +422,8 @@ $('resumeBtn').addEventListener('click', () => {
   const saved = loadLocal();
   if (!saved) return refreshMenu();
   G = saved;
+  lbSubmitted = false; // a resumed match hasn't been submitted yet
+  resetLbPanel();
   handRevealed = G.mode !== 'pass';
   if (G.mode === 'pass' && G.state.phase === 'playing') showHandoff(G.state.currentPlayer);
   else presentState();
@@ -617,6 +631,8 @@ function enterOnlineGame(match) {
   onlinePushing = false;
   pollErrors = 0;
   G = { mode: 'online', state: match.state };
+  lbSubmitted = false;
+  resetLbPanel();
   handRevealed = true;
   lobby.classList.add('hidden');
   presentState();
@@ -676,6 +692,7 @@ function showDeparture(name = 'A crew member') {
   $('gameoverLine').textContent = `${name} stepped away, so this online match is over.`;
   $('finalScores').replaceChildren();
   $('againBtn').classList.add('hidden');
+  resetLbPanel();
   show('gameover');
 }
 
@@ -690,6 +707,128 @@ async function onlineRematch() {
   await pushOnline(fresh, null);
   $('againBtn').disabled = false;
 }
+
+/* ------------------------------------------------------------- leaderboard */
+// Monthly board for vs-bot wins only. Score = point margin at 100
+// (your points minus the bot's), clamped to 1..999, +1000 for beating
+// The Neighbor so any Neighbor win outranks any Pete win.
+
+const lbBox = $('lb');
+const lbList = $('lbList');
+const lbStatusEl = $('lbStatus');
+const lbForm = $('lbForm');
+const lbNameInput = $('lbNameInput');
+const lbThisBtn = $('lbThisBtn');
+const lbLastBtn = $('lbLastBtn');
+const lbRenameBtn = $('lbRenameBtn');
+let lbMonthOffset = 0;
+let lbSubmitted = false;
+
+if (lbEnabled()) {
+  lbThisBtn.textContent = `🏆 ${monthLabel(0)}`;
+  lbLastBtn.textContent = monthLabel(-1);
+}
+
+function resetLbPanel() {
+  lbBox.classList.add('hidden');
+  lbForm.classList.add('hidden');
+  lbForm.dataset.pendingScore = '';
+}
+
+function botWinScore() {
+  const margin = Math.max(1, Math.min(999, G.state.scores[0] - G.state.scores[BOT_SEAT]));
+  return G.bot === 'neighbor' ? 1000 + margin : margin;
+}
+
+// s >= 1000 means a Neighbor win (margin = s - 1000); otherwise a Pete win
+function lbScoreLabel(s) {
+  return s >= 1000 ? `👀 +${s - 1000} pts` : `🪑 +${s} pts`;
+}
+
+// score > 0 submits a fresh win; score 0 just shows the standings read-only
+async function updateLeaderboard(score) {
+  if (!lbEnabled()) return;
+  lbBox.classList.remove('hidden');
+  if (score > 0 && !lbGetName()) {
+    // first win with no saved name: hold the score until they pick one
+    lbForm.classList.remove('hidden');
+    lbRenameBtn.classList.add('hidden');
+    lbStatusEl.textContent = 'Pick a name to join the monthly leaderboard!';
+    lbList.replaceChildren();
+    lbForm.dataset.pendingScore = String(score);
+    return;
+  }
+  if (score > 0) {
+    try { await submitScore(score); } catch { /* offline — still show the board */ }
+  }
+  renderLbBoard();
+}
+
+async function renderLbBoard() {
+  lbForm.classList.add('hidden');
+  lbRenameBtn.classList.remove('hidden');
+  lbStatusEl.textContent = 'Loading…';
+  try {
+    const rows = await fetchTop(lbMonthOffset);
+    const me = lbPlayerId();
+    lbList.replaceChildren();
+    rows.slice(0, 10).forEach((r, i) => {
+      const li = document.createElement('li');
+      if (r.player_id === me) li.className = 'me';
+      const medal = ['🥇', '🥈', '🥉'][i];
+      const rank = document.createElement('span');
+      rank.className = 'rank';
+      rank.textContent = medal || `${i + 1}.`;
+      const nm = document.createElement('span');
+      nm.className = 'nm';
+      nm.textContent = r.name;
+      const sc = document.createElement('span');
+      sc.className = 'sc';
+      sc.textContent = lbScoreLabel(r.score);
+      li.append(rank, nm, sc);
+      lbList.appendChild(li);
+    });
+    const myRank = rows.findIndex((r) => r.player_id === me);
+    lbStatusEl.textContent = rows.length === 0
+      ? 'No scores yet this month — be the first!'
+      : myRank >= 0 ? `You're #${myRank + 1} of ${rows.length} this month` : '';
+  } catch {
+    lbStatusEl.textContent = 'Leaderboard unavailable (offline?)';
+  }
+}
+
+$('lbSaveBtn').addEventListener('click', async () => {
+  const name = lbNameInput.value.trim();
+  if (!name) { lbNameInput.focus(); return; }
+  const pending = Number(lbForm.dataset.pendingScore || 0);
+  lbForm.dataset.pendingScore = '';
+  try {
+    await renamePlayer(name); // saves locally + renames any existing rows
+    if (pending > 0) await submitScore(pending);
+  } catch { /* offline — the name is still saved locally */ }
+  renderLbBoard();
+});
+lbNameInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') $('lbSaveBtn').click();
+});
+lbRenameBtn.addEventListener('click', () => {
+  lbNameInput.value = lbGetName();
+  lbForm.classList.remove('hidden');
+  lbRenameBtn.classList.add('hidden');
+  lbNameInput.focus();
+});
+lbThisBtn.addEventListener('click', () => {
+  lbMonthOffset = 0;
+  lbThisBtn.classList.add('sel');
+  lbLastBtn.classList.remove('sel');
+  renderLbBoard();
+});
+lbLastBtn.addEventListener('click', () => {
+  lbMonthOffset = -1;
+  lbLastBtn.classList.add('sel');
+  lbThisBtn.classList.remove('sel');
+  renderLbBoard();
+});
 
 window.addEventListener('resize', () => {
   if (G && !screens.game.classList.contains('hidden')) renderChain();
