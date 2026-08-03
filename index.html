@@ -194,6 +194,20 @@
       <h2 id="gameoverTitle"></h2>
       <p id="gameoverLine"></p>
       <div id="finalScores" class="result-scores"></div>
+      <!-- Monthly leaderboard: shown after vs-bot matches only (see js/main.js) -->
+      <div id="lb" class="hidden">
+        <div class="lb-tabs">
+          <button class="lb-chip sel" id="lbThisBtn">🏆 This Month</button>
+          <button class="lb-chip" id="lbLastBtn">Last Month</button>
+        </div>
+        <div class="lb-status" id="lbStatus"></div>
+        <ol id="lbList"></ol>
+        <div class="lb-form hidden" id="lbForm">
+          <input id="lbNameInput" maxlength="20" placeholder="Your name" autocomplete="nickname">
+          <button class="lb-chip" id="lbSaveBtn">SAVE</button>
+        </div>
+        <button class="lb-chip lb-rename" id="lbRenameBtn">✏️ Change name</button>
+      </div>
       <button id="againBtn" class="primary">PLAY ANOTHER MATCH</button>
       <button id="menuBtn" class="text-btn">BACK TO MENU</button>
       <a class="brief-cta" href="https://www.btownbrief.com">The porch gossip can wait.<br><b>Read the BTown Brief →</b></a>
